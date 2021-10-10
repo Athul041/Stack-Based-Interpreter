@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
-#include <string.h>
+#include <string.h> 
+#include <unistd.h>
 #include <winsock2.h>
 
 void readFromFile(char *fileName, char *memPtr)
@@ -69,6 +70,13 @@ void printStack(char *memPtr, int stackHead, int stackStart)
     printf("\n");
 }
 
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
 {
     unsigned char *memory = malloc(pow(2,32)/8);
@@ -78,14 +86,31 @@ int main(int argc, char *argv[])
         return(0);
     }
 
-    if(argc < 3)
-    {
-        printf("Executable and/or constant_pool not given");
-        return(0);
-    }
-    readFromFile(argv[1], &memory[1024/8]);
-    readFromFile(argv[2], &memory[256/8]);
+    // if(argc < 3)
+    // {
+    //     printf("Executable and/or constant_pool not given");
+    //     return(0);
+    // }
 
+    int opt;
+    while((opt = getopt(argc, argv, ":e:c:")) != -1) 
+    { 
+        switch(opt) 
+        { 
+            case 'e':
+                readFromFile(optarg, &memory[1024/8]); 
+                break; 
+            case 'c':
+                readFromFile(optarg, &memory[256/8]); 
+                break;  
+            case ':': 
+                printf("option needs a value\n"); 
+                exit(0); 
+            case '?': 
+                printf("unknown option: %c\n", optopt);
+                exit(0);
+        } 
+    }
     int callStackStart = 1048576/8;                       // Execution Stack Start
     int stackHead = callStackStart;                       // Execution Stack Head
     int pc = 1024/8;                                      // Program Counter
