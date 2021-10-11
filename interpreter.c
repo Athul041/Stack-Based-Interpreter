@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
     int val = 0;
     int i = 0;
+    int *arr;
 
     while(stackHead >= callStackStart)
     {
@@ -371,11 +372,11 @@ int main(int argc, char *argv[])
             case 0xb1:
                 // printf("\nreturn");
                 // // printf("\nmemory[cp+6]%02x", memory[cp+6]);
-                // if(memory[cp+6] != 0x02)
-                // {
-                //     // printf("\nError!return type not void");
-                //     exit(0);
-                // }
+                if(memory[cp+6] != 0x02)
+                {
+                    printf("\nWarning!Trying to return void from function with return type not void");
+                    exit(0);
+                }
                 currentOpStack = stackHead;
                 stackHead = getIntFromMem(&memory[stackHead + 4]);
                 break;
@@ -395,7 +396,10 @@ int main(int argc, char *argv[])
                 // // printf("\n currentOpstack %d", currentOpStack);
                 // // printStack(memory, currentOpStack, stackHead+72);
                 // // printf("\n SP %d", getIntFromMem(&memory[stackHead + 4]));
-
+                if(memory[cp+6] == 0x02)
+                {
+                    printf("\nWarning!Trying to return void from function with return type int");
+                }
                 pushIntToMem(&memory[stackHead], popIntFromStack(memory, &currentOpStack, stackHead+72));
                 currentOpStack = stackHead + 4;
                 stackHead = getIntFromMem(&memory[stackHead + 4]);
@@ -423,7 +427,6 @@ int main(int argc, char *argv[])
                 // pop no. of args times from old opstack and load to lva
                 // set pc, stackhead, currentopstack
                 cp = 256/8 + 7*(int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]);
-                int arr[memory[cp+4]];
                 // printStack(memory, currentOpStack, stackHead+72);
                 for(i = 0; i < memory[cp+4]; i++)
                 {
@@ -441,6 +444,9 @@ int main(int argc, char *argv[])
                 currentOpStack = stackHead + 72;
                 pushIntToMem(&memory[stackHead], (1024 + 8*(getIntFromLoadedMem(&memory[cp]) - 1024))/8);
                 break;
+            default:
+                printf("\n Unknown Instruction %02x!!", instr);
+                exit(0);
         }
         // // printf("\nNext instr\n");
     }
