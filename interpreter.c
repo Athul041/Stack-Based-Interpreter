@@ -33,12 +33,17 @@ void pushIntToMem(unsigned char *destination, signed int num)
     destination[2] = (num >> 16);
     destination[1] = (num >> 8);
     destination[0] = num;
-    // printf("\nInt in stack as hex %02x %02x %02x %02x", destination[0], destination[1], destination[2], destination[3]);
+    // printf("\nInt after push %02x %02x %02x %02x", destination[0], destination[1], destination[2], destination[3]);
 }
 
 signed int getIntFromMem(unsigned char *memPtr)
 {
     signed int num = (signed int)memPtr[0] | (memPtr[1] << 8) | (memPtr[2] << 16) | (memPtr[3] << 24);
+    return num;
+}
+signed int getIntFromLoadedMem(unsigned char *memPtr)
+{
+    signed int num = (signed int)memPtr[3] | (memPtr[2] << 8) | (memPtr[1] << 16) | (memPtr[0] << 24);
     return num;
 }
 
@@ -135,7 +140,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                for(int i = 0; i < memory[cp+4]; i++)           // memory[stackHead+4*i] is the localVariable array
+                for(int i = 0; i < memory[cp+4]; i++)           // memory[stackHead+8+(4*i)] is the localVariable array
                 {
                     printf("\nLoading arg %d to memory", i);
                     relocateInt(memory+getIntFromMem(memory+stackHead)+4+i, &memory[stackHead+8+(4*i)]);
@@ -155,7 +160,7 @@ int main(int argc, char *argv[])
             case 0x10: // biPush(value)
                 printf("\nBiPush");
                 printf("\noperand %02x", memory[getIntFromMem(&memory[stackHead])+1]);
-                pushIntToMem(&memory[currentOpStack], memory[getIntFromMem(&memory[stackHead])+1]);  // Push to opstack
+                pushIntToMem(&memory[currentOpStack], (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+1]));  // Push to opstack
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 2);  // Next instruction
@@ -163,9 +168,8 @@ int main(int argc, char *argv[])
             case 0x36: // iStore(index)
                 printf("\niStore");
                 printf("\noperand %02x", memory[getIntFromMem(&memory[stackHead])+1]);
-                relocateInt(&memory[currentOpStack], &memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]);
+                pushIntToMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4], popIntFromStack(memory, &currentOpStack, stackHead+72));
                 // Pop from stack to lva
-                currentOpStack -= 4;
                 printStack(memory, currentOpStack, stackHead+72);
                 printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[stackHead])+1], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]));
                 addIntValueToMem(&memory[stackHead], 2);
@@ -179,6 +183,23 @@ int main(int argc, char *argv[])
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 2);
                 break;
+            case 0x2e: // iaload
+                printf("\niaload");
+                // pop arrayref, index from stack, push value
+                pushIntToMem(&memory[currentOpStack], getIntFromLoadedMem(&memory[popIntFromStack(memory, &currentOpStack, stackHead+72) + popIntFromStack(memory, &currentOpStack, stackHead+72)/8]));
+                printStack(memory, currentOpStack, stackHead+72);
+                currentOpStack += 4;
+                addIntValueToMem(&memory[stackHead], 1);
+                break; 
+            case 0x4f: // iastore
+                printf("\niastore");
+                // pop arrayref, index, value from stack, set val to arrayref/8 + index
+                int val = popIntFromStack(memory, &currentOpStack, stackHead+72);
+                pushIntToMem(&memory[popIntFromStack(memory, &currentOpStack, stackHead+72) + popIntFromStack(memory, &currentOpStack, stackHead+72)/8], val);
+                printStack(memory, currentOpStack, stackHead+72);
+                currentOpStack += 4;
+                addIntValueToMem(&memory[stackHead], 1);
+                break;   
             case 0x3: // iConst_0
                 printf("\niconst0");
                 pushIntToMem(&memory[currentOpStack], 0);
@@ -190,7 +211,7 @@ int main(int argc, char *argv[])
                 printf("\niadd");
                 // push to stack (sum of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                pushIntToMem(&memory[currentOpStack], popIntFromStack(memory, &currentOpStack, stackHead+40) + popIntFromStack(memory, &currentOpStack, stackHead+40));
+                pushIntToMem(&memory[currentOpStack], popIntFromStack(memory, &currentOpStack, stackHead+72) + popIntFromStack(memory, &currentOpStack, stackHead+72));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -199,8 +220,8 @@ int main(int argc, char *argv[])
                 printf("\nisub");
                 // push to stack (dif of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                int temp = popIntFromStack(memory, &currentOpStack, stackHead+40);
-                pushIntToMem(&memory[currentOpStack], (popIntFromStack(memory, &currentOpStack, stackHead+40) - temp));
+                int temp = popIntFromStack(memory, &currentOpStack, stackHead+72);
+                pushIntToMem(&memory[currentOpStack], (popIntFromStack(memory, &currentOpStack, stackHead+72) - temp));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -209,7 +230,7 @@ int main(int argc, char *argv[])
                 printf("\nimul");
                 // push to stack (prod of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                pushIntToMem(&memory[currentOpStack], popIntFromStack(memory, &currentOpStack, stackHead+40) * popIntFromStack(memory, &currentOpStack, stackHead+40));
+                pushIntToMem(&memory[currentOpStack], popIntFromStack(memory, &currentOpStack, stackHead+72) * popIntFromStack(memory, &currentOpStack, stackHead+72));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -218,7 +239,7 @@ int main(int argc, char *argv[])
                 printf("\nidiv");
                 // push to stack (quotient of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                pushIntToMem(&memory[currentOpStack], (int)(((float)1 / popIntFromStack(memory, &currentOpStack, stackHead+40)) * popIntFromStack(memory, &currentOpStack, stackHead+40)));
+                pushIntToMem(&memory[currentOpStack], (int)(((float)1 / popIntFromStack(memory, &currentOpStack, stackHead+72)) * popIntFromStack(memory, &currentOpStack, stackHead+72)));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -227,7 +248,7 @@ int main(int argc, char *argv[])
                 printf("\niand");
                 // push to stack (bitwise and of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                pushIntToMem(&memory[currentOpStack], (int)(popIntFromStack(memory, &currentOpStack, stackHead+40) & popIntFromStack(memory, &currentOpStack, stackHead+40)));
+                pushIntToMem(&memory[currentOpStack], (int)(popIntFromStack(memory, &currentOpStack, stackHead+72) & popIntFromStack(memory, &currentOpStack, stackHead+72)));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -236,7 +257,7 @@ int main(int argc, char *argv[])
                 printf("\nior");
                 // push to stack (bitwise and of stackhead.pop + stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                pushIntToMem(&memory[currentOpStack], (int)(popIntFromStack(memory, &currentOpStack, stackHead+40) | popIntFromStack(memory, &currentOpStack, stackHead+40)));
+                pushIntToMem(&memory[currentOpStack], (int)(popIntFromStack(memory, &currentOpStack, stackHead+72) | popIntFromStack(memory, &currentOpStack, stackHead+72)));
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
                 addIntValueToMem(&memory[stackHead], 1);
@@ -245,7 +266,7 @@ int main(int argc, char *argv[])
                 printf("\nineg");
                 // push to stack (neg of stackhead.pop)
                 printStack(memory, currentOpStack, stackHead+72);
-                temp = popIntFromStack(memory, &currentOpStack, stackHead+40);
+                temp = popIntFromStack(memory, &currentOpStack, stackHead+72);
                 pushIntToMem(&memory[currentOpStack], -temp);
                 printStack(memory, currentOpStack, stackHead+72);
                 currentOpStack += 4;
@@ -256,21 +277,22 @@ int main(int argc, char *argv[])
                 // make const signed int then add to val at index
                 // read const to variable
                 printf("\noperands %02x, %02x", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2]);
-                printf("\nsign extended op2 %d", (signed int)memory[getIntFromMem(&memory[stackHead])+2]);
-                pushIntToMem(&memory[stackHead + 12 + memory[cp+4]*4], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]) + (signed int)memory[getIntFromMem(&memory[stackHead])+2]);
+                printf("\nsign extended op2 %d", (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+2]));
+                printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[stackHead])+1], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]));
+                pushIntToMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]) + (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+2]));
                 printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[stackHead])+1], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]));
                 addIntValueToMem(&memory[stackHead], 3);
                 break;
             case 0xFF:
                 printf("\nwrite");
                 printStack(memory, currentOpStack, stackHead+72);
-                printf("%d\n", popIntFromStack(memory, &currentOpStack, stackHead+40));
+                printf("%d\n", popIntFromStack(memory, &currentOpStack, stackHead+72));
                 addIntValueToMem(&memory[stackHead], 1);
                 break;
             case 0x57:
                 printf("\npop");
                 printStack(memory, currentOpStack, stackHead+72);
-                popIntFromStack(memory, &currentOpStack, stackHead+40);
+                popIntFromStack(memory, &currentOpStack, stackHead+72);
                 addIntValueToMem(&memory[stackHead], 1);
                 break;
             case 0xb1:
