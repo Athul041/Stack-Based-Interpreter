@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
-#include <string.h> 
 #include <unistd.h>
-#include <winsock2.h>
 
 void readFromFile(char *fileName, char *memPtr)
 {
