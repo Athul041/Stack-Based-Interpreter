@@ -126,6 +126,7 @@ int main(int argc, char *argv[])
     // printf("\nLoading command line arg to memory");
     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
     int val = 0;
+    int i = 0;
 
     while(stackHead >= callStackStart)
     {
@@ -424,7 +425,7 @@ int main(int argc, char *argv[])
                 cp = 256/8 + 7*(int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]);
                 int arr[memory[cp+4]];
                 // printStack(memory, currentOpStack, stackHead+72);
-                for(int i = 0; i < memory[cp+4]; i++)
+                for(i = 0; i < memory[cp+4]; i++)
                 {
                     arr[i] = popIntFromStack(memory, &currentOpStack, stackHead+72);
                     // // printf("\narr[%d] %d", i, arr[i]);
@@ -432,7 +433,7 @@ int main(int argc, char *argv[])
                 pushIntToMem(&memory[currentOpStack+4], stackHead);
                 addIntValueToMem(&memory[stackHead], 3); // incrementing pc before changing stackhead
                 stackHead = currentOpStack;
-                for(int i = memory[cp+4]-1; i >= 0; i--)
+                for(i = memory[cp+4]-1; i >= 0; i--)
                 {
                     // // printf("\npushing %d", arr[i]);
                     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4 + (4*i)], arr[i]);
