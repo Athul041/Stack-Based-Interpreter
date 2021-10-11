@@ -279,8 +279,93 @@ int main(int argc, char *argv[])
                 printf("\noperands %02x, %02x", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2]);
                 printf("\nsign extended op2 %d", (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+2]));
                 printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[stackHead])+1], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]));
-                pushIntToMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]) + (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+2]));
+                pushIntToMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]) 
+                            + (int32_t)((int8_t)memory[getIntFromMem(&memory[stackHead])+2]));
                 printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[stackHead])+1], getIntFromMem(&memory[stackHead + 12 + memory[cp+4]*4 + memory[getIntFromMem(&memory[stackHead])+1]*4]));
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x9f:
+                printf("\nif_icmpeq"); // if_icmpeq(branchbyte1, branchbyte2)
+                // if ints are equal, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) == popIntFromStack(memory, &currentOpStack, stackHead+72))
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x99:
+                printf("\nifeq"); // ifeq(branchbyte1, branchbyte2)
+                // if value is zero, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) == 0)
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x9b:
+                printf("\niflt"); // iflt(branchbyte1, branchbyte2)
+                // if value is less than zero, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) < 0)
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x9c:
+                printf("\nifge"); // ifge(branchbyte1, branchbyte2)
+                // if value is greater than or equal to zero, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) >= 0)
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x9d:
+                printf("\nifgt"); // ifgt(branchbyte1, branchbyte2)
+                // if value is greater than zero, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) > 0)
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0x9e:
+                printf("\nifle"); // ifle(branchbyte1, branchbyte2)
+                // if value is less than or equal to zero, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72) <= 0)
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
+                addIntValueToMem(&memory[stackHead], 3);
+                break;
+            case 0xc6:
+                printf("\nifnull"); // ifnull(branchbyte1, branchbyte2)
+                // if value is null, branch to instruction at branchoffset (signed short constructed 
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
+                if(popIntFromStack(memory, &currentOpStack, stackHead+72))
+                {
+                    printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                    break;
+                }
                 addIntValueToMem(&memory[stackHead], 3);
                 break;
             case 0xFF:
@@ -306,7 +391,37 @@ int main(int argc, char *argv[])
                 currentOpStack = stackHead;
                 stackHead = getIntFromMem(&memory[stackHead + 4]);
                 break;
-            // case 
+            case 0xa7:
+                printf("\ngoto"); // goto(branchbyte1, branchbyte2 )
+                //goto offset
+                // from unsigned bytes branchbyte1 << 8 | branchbyte2)
+                addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
+                break;
+            case 0xac:
+                printf("\nireturn");
+                // int popped from opstack of current frame
+                // to opstack of previous frame
+                pushIntToMem(&memory[stackHead], popIntFromStack(memory, &currentOpStack, stackHead+72));
+                currentOpStack = stackHead;
+                stackHead = getIntFromMem(&memory[stackHead + 4]);
+                break;
+            case 0xFE:
+                printf("\niread"); // iread
+                int input;
+                printf("\nInput integer value :");
+                scanf("%d", &input);
+                pushIntToMem(&memory[currentOpStack], input);
+                printStack(memory, currentOpStack, stackHead+72);
+                currentOpStack += 4;
+                addIntValueToMem(&memory[stackHead], 1);
+                break;
+            case 0xb8:
+                printf("\ninvokestatic"); // invokestatic(indexbyte,indexbyte)
+                // (indexbyte1 << 8) | indexbyte2 gives index of constant pool
+                // goto that method with new stackframe
+                // pop no. of args times from old opstack and load to lva
+                // set pc, stackhead, currentopstack
+                break;
         }
         printf("\nNext instr\n");
         
