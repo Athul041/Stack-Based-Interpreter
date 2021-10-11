@@ -344,8 +344,11 @@ int main(int argc, char *argv[])
                 // printf("\nifnull"); // ifnull(branchbyte1, branchbyte2)
                 // if value is null, branch to instruction at branchoffset (signed short constructed 
                 // from unsigned bytes branchbyte1 << 8 | branchbyte2) 
-                if(popIntFromStack(memory, &currentOpStack, stackHead+72))
+                // printStack(memory, currentOpStack, stackHead+72);
+                // printf("\ngetIntFromMem(&memory[popIntFromStack(memory, &currentOpStack, stackHead+72)] %d", getIntFromMem(&memory[popIntFromStack(memory, &currentOpStack, stackHead+72)]));
+                if(!popIntFromStack(memory, &currentOpStack, stackHead+72))
                 {
+                    // printf("\nHere");
                     // printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[stackHead])+1], memory[getIntFromMem(&memory[stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
                     addIntValueToMem(&memory[stackHead], (int16_t)(memory[getIntFromMem(&memory[stackHead])+1] << 8 | memory[getIntFromMem(&memory[stackHead])+2]));
                     break;
