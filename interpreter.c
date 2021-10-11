@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
     int val = 0;
     int i = 0;
-    int *arr;
+    int arr[16];
 
     while(stackHead >= callStackStart)
     {
@@ -372,11 +372,10 @@ int main(int argc, char *argv[])
             case 0xb1:
                 // printf("\nreturn");
                 // // printf("\nmemory[cp+6]%02x", memory[cp+6]);
-                if(memory[cp+6] != 0x02)
-                {
-                    printf("\nWarning!Trying to return void from function with return type not void");
-                    exit(0);
-                }
+                // if(memory[cp+6] != 0x02)
+                // {
+                //     printf("\nWarning!Trying to return void from function with return type not void");
+                // }
                 currentOpStack = stackHead;
                 stackHead = getIntFromMem(&memory[stackHead + 4]);
                 break;
@@ -396,10 +395,10 @@ int main(int argc, char *argv[])
                 // // printf("\n currentOpstack %d", currentOpStack);
                 // // printStack(memory, currentOpStack, stackHead+72);
                 // // printf("\n SP %d", getIntFromMem(&memory[stackHead + 4]));
-                if(memory[cp+6] == 0x02)
-                {
-                    printf("\nWarning!Trying to return void from function with return type int");
-                }
+                // if(memory[cp+6] == 0x02)
+                // {
+                //     printf("\nWarning!Trying to return void from function with return type int");
+                // }
                 pushIntToMem(&memory[stackHead], popIntFromStack(memory, &currentOpStack, stackHead+72));
                 currentOpStack = stackHead + 4;
                 stackHead = getIntFromMem(&memory[stackHead + 4]);
