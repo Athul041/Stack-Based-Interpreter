@@ -7,7 +7,7 @@
 #include <limits.h>
 #include "interpret.h"
 #include "MemFunctions.h"
-#define MEMORY_SIZE 4294967296/2
+#define MEMORY_SIZE pow(2,32)/8 // 4294967296
 
 void readFromFile(char *fileName, char *memPtr)
 {
@@ -29,8 +29,8 @@ void readFromFile(char *fileName, char *memPtr)
 
 int main(int argc, char *argv[])
 {
-    size_t sz = 4294967296;
-    printf("sizemax %f", sz);
+    size_t sz = MEMORY_SIZE;
+    // printf("sizemax %u", sz);
     unsigned char *memory = malloc(sz);
     if(memory == NULL)
     {
@@ -58,11 +58,11 @@ int main(int argc, char *argv[])
         } 
     }
     int callStackStart = 1048576;                       // Execution Stack Start
-    long stackHead = callStackStart;                     // Execution Stack Head
-    long cp = 256;                                       // Constant Pool Cunter
-    long currentOpStack = callStackStart + 72;           // Operand Stack
-    unsigned long heapHead = MEMORY_SIZE;
-    printf("\nheapHead %d ", heapHead);
+    unsigned int stackHead = callStackStart;                     // Execution Stack Head
+    unsigned int cp = 256;                                       // Constant Pool Cunter
+    unsigned int currentOpStack = callStackStart + 72;           // Operand Stack
+    unsigned int heapHead = MEMORY_SIZE - 1;
+    // printf("\nheapHead %u ", heapHead);
     pushIntToMem(&memory[stackHead], 1024);
     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
 
@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
     while(stackHead >= callStackStart)
     {
         interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead);
+        // printf("\nNext Instruction");
     }
 }
 

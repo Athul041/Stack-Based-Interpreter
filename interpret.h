@@ -1,1 +1,1 @@
-extern void interpretInstructions(unsigned char *memory, unsigned long *stackHead, unsigned long *currentOpStack, unsigned long *cp, unsigned long *heapHead);
+extern void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsigned int *currentOpStack, unsigned int *cp, unsigned int *heapHead);

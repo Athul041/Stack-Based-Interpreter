@@ -12,9 +12,26 @@ void pushIntToMem(unsigned char *destination, signed int num)
     // // printf("\nInt after push %02x %02x %02x %02x", destination[0], destination[1], destination[2], destination[3]);
 }
 
+void pushRefToMem(unsigned char *destination, unsigned int num)
+{
+    // printf("\nPushing %u to memory", num);
+    // printf("\nInt before push %u | %02x %02x %02x %02x", num, num, (num >> 8), (num >> 16), (num >> 24));
+    destination[3] = (num >> 24);
+    destination[2] = (num >> 16);
+    destination[1] = (num >> 8);
+    destination[0] = num;
+    // printf("\nInt after push %u | %02x %02x %02x %02x", getRefFromMem(destination), destination[0], destination[1], destination[2], destination[3]);
+}
+
 signed int getIntFromMem(unsigned char *memPtr)
 {
     signed int num = (signed int)memPtr[0] | (memPtr[1] << 8) | (memPtr[2] << 16) | (memPtr[3] << 24);
+    return num;
+}
+
+unsigned int getRefFromMem(unsigned char *memPtr)
+{
+    unsigned int num = memPtr[0] | (memPtr[1] << 8) | (memPtr[2] << 16) | (memPtr[3] << 24);
     return num;
 }
 
