@@ -18,52 +18,53 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
 
     switch(instr){
         case 0x10: // biPush(value)
-            // printf("\nBiPush");
-            // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
+            printf("\nBiPush");
+            printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
             pushIntToMem(&memory[*currentOpStack], (int32_t)((int8_t)memory[getIntFromMem(&memory[*stackHead])+1]));  // Push to opstack
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 2);  // Next instruction
             break;
         case 0x36: // iStore(index)
-            // printf("\niStore");
-            // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
+            printf("\niStore");
+            printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
             pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popIntFromStack(memory, currentOpStack, *stackHead+72));
             // Pop from stack to lva
-            // printStack(memory, *currentOpStack, *stackHead+72);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            printStack(memory, *currentOpStack, *stackHead+72);
+            printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0x15: // iLoad(index)
-            // printf("\niLoad");
-            // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            printf("\niLoad");
+            printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
+            printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0x2e: // iaload
-            // printf("\niaload");
+            printf("\niaload");
             // pop arrayref, index from stack, push value
-            pushIntToMem(&memory[*currentOpStack], getIntFromLoadedMem(&memory[popIntFromStack(memory, currentOpStack, *stackHead+72) + popIntFromStack(memory, currentOpStack, *stackHead+72)/8]));
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popIntFromStack(memory, currentOpStack, *stackHead+72)]));
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 1);
             break; 
         case 0x4f: // iastore
-            // printf("\niastore");
-            // pop arrayref, index, value from stack, set val to arrayref/8 + index
+            printf("\niastore");
+            // pop arrayref, index, value from stack, set val to arrayref + index
             val = popIntFromStack(memory, currentOpStack, *stackHead+72);
-            pushIntToMem(&memory[popIntFromStack(memory, currentOpStack, *stackHead+72) + popIntFromStack(memory, currentOpStack, *stackHead+72)/8], val);
-            // printStack(memory, *currentOpStack, *stackHead+72);
-            *currentOpStack += 4;
+            pushIntToMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)], val);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            // *currentOpStack += 4;
+            printHeap(memory, *heapHead);
             addIntValueToMem(&memory[*stackHead], 1);
             break;   
         case 0x3: // iConst_0
-            // printf("\niconst0");
+            printf("\niconst0");
             pushIntToMem(&memory[*currentOpStack], 0);
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 1);
             break;
@@ -304,7 +305,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // goto that method with new stackframe
             // pop no. of args times from old opstack and load to lva
             // set pc, *stackHead, *currentOpStack
-            *cp = 256/8 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
+            *cp = 256 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
             // printStack(memory, *currentOpStack, *stackHead+72);
             for(i = 0; i < memory[*cp+4]; i++)
             {
@@ -320,61 +321,131 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
                 pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + (4*i)], arr[i]);
             }
             *currentOpStack = *stackHead + 72;
-            pushIntToMem(&memory[*stackHead], (1024 + 8*(getIntFromLoadedMem(&memory[*cp]) - 1024))/8);
+            pushIntToMem(&memory[*stackHead], (1024 + (getIntFromMem(&memory[*cp]) - 1024)));
             break;
         case 0xbb:
-            // printf("\nnew"); // new(indexbyte,indexbyte)
-            val = 768 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
-            // printf("\nSizeofObj %d", (int)memory[val]);
-            // printf("\nheapHead %d", *heapHead);
-            *heapHead = *heapHead - 4*(int)memory[val];
-            // printf("\nheapHead %d", *heapHead);
+            printf("\nnew"); // new(indexbyte,indexbyte)
+            printf("\nindex %u", 768 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]));
+            val = 768 + 4*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
+            printf("\nSizeofObj %d", (int)memory[val]);
+            printf("\nheapHead %u", *heapHead);
+            *heapHead -= 4*(int)memory[val];
+            printf("\nheapHead %d", *heapHead);
             for(i=0;i<(int)memory[val];i++)
             {
-                // printf("\npushing to mem at %d", *heapHead + 4*i);
+                printf("\npushing to mem at %d", *heapHead + 4*i);
                 pushIntToMem(&memory[*heapHead + 4*i], 0);
             }
-            // printf("\nheapHead %u", *heapHead);
-            // printf("\ncurrentOpStack %u", *currentOpStack);
+            printf("\nheapHead %u", *heapHead);
+            printf("\ncurrentOpStack %u", *currentOpStack);
             pushRefToMem(&memory[*currentOpStack], *heapHead);
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
+            printHeap(memory, *heapHead);
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0x3a:
-            // printf("\nastore"); // astore(index)
-            // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printf("\nastore"); // astore(index)
+            printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
+            printStack(memory, *currentOpStack, *stackHead+72);
             pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popRefFromStack(memory, currentOpStack, *stackHead+72));
-            // printf("\nLocal variable at index#%d = %u", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            printf("\nLocal variable at index#%d = %u", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0x19: // aload(index)
-            // printf("\naLoad");
-            // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            printf("\naLoad");
+            printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
+            printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             pushRefToMem(&memory[*currentOpStack], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0xb4: // getfield(indexbyte1, indexbyte2)
-            // printf("\ngetfield");
+            printf("\ngetfield");
+            printHeap(memory, *heapHead);
             pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72) 
                                     + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])]));
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0xb5: // putfield(indexbyte1, indexbyte2)
-            // printf("\nputfield");
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printf("\nputfield");
+            printStack(memory, *currentOpStack, *stackHead+72);
             val = popIntFromStack(memory, currentOpStack, *stackHead+72);
             pushIntToMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72)
                                     + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])], val);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            // *currentOpStack += 4;
+            printHeap(memory, *heapHead);
+            addIntValueToMem(&memory[*stackHead], 3);
+            break;
+        case 0x59: // dup
+            printf("\ndup");
+            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[*currentOpStack-4]));
+            printStack(memory, *currentOpStack, *stackHead+72);
+            *currentOpStack += 4;
+            addIntValueToMem(&memory[*stackHead], 1);
+            break;
+        case 0xbc: // newarray(atype)
+            printf("\nnewarray");
+            val = popIntFromStack(memory, currentOpStack, *stackHead+72);
+            *heapHead -= 4*val;
+            if(memory[getIntFromMem(&memory[*stackHead])+1])
+            {
+                for(i=0;i<val;i++)
+                {
+                    pushRefToMem(&memory[*heapHead + 4*i], 0);
+                }
+            }
+            else if(memory[getIntFromMem(&memory[*stackHead])+1] == 0)
+            {
+                for(i=0;i<val;i++)
+                {
+                    pushIntToMem(&memory[*heapHead + 4*i], 0);
+                }
+            }
+            pushRefToMem(&memory[*currentOpStack], *heapHead);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            *currentOpStack += 4;
+            printHeap(memory, *heapHead);
+            addIntValueToMem(&memory[*stackHead], 2);
+            break;
+        case 0xbd:
+            printf("\nanewarray"); // anewarray(indexbyte1,indexbyte2)
+            val = 768 + 4*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
+            printf("\nheapHead %u", *heapHead);
+            *heapHead -= 4*(int)memory[val]*popIntFromStack(memory, currentOpStack, *stackHead+72);
+            printf("\nheapHead %u", *heapHead);
+            // printf("\ncurrentOpStack %u", *currentOpStack);
+            pushRefToMem(&memory[*currentOpStack], *heapHead);
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
+            printHeap(memory, *heapHead);
             addIntValueToMem(&memory[*stackHead], 3);
+            break;
+        case 0x32:
+            printf("\naaload"); // aaload
+            pushRefToMem(&memory[*currentOpStack], getRefFromMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)]));
+            printStack(memory, *currentOpStack, *stackHead+72);
+            *currentOpStack += 4;
+            addIntValueToMem(&memory[*stackHead], 1);
+            break;
+        case 0x53:
+            printf("\naastore"); // aastore
+            val = popRefFromStack(memory, currentOpStack, *stackHead+72);
+            pushRefToMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)], val);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            printHeap(memory, *heapHead);
+            addIntValueToMem(&memory[*stackHead], 1);
+            break;
+        case 0x1:
+            printf("\naconst_null"); // aastore
+            pushRefToMem(&memory[*currentOpStack], 0);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            *currentOpStack += 4;
+            addIntValueToMem(&memory[*stackHead], 1);
             break;
         default:
             printf("\n Unknown Instruction %02x!!", instr);

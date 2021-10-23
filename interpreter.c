@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     unsigned int stackHead = callStackStart;                     // Execution Stack Head
     unsigned int cp = 256;                                       // Constant Pool Cunter
     unsigned int currentOpStack = callStackStart + 72;           // Operand Stack
-    unsigned int heapHead = MEMORY_SIZE - 1;
+    unsigned int heapHead = MEMORY_SIZE;
     // printf("\nheapHead %u ", heapHead);
     pushIntToMem(&memory[stackHead], 1024);
     pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     while(stackHead >= callStackStart)
     {
         interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead);
-        // printf("\nNext Instruction");
+        printf("\n");
     }
 }
 
