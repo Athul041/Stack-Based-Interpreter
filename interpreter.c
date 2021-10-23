@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     while(stackHead >= callStackStart)
     {
         interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead);
-        printf("\n");
+        // printf("\n");
     }
 }
 
