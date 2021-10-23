@@ -57,20 +57,21 @@ int main(int argc, char *argv[])
                 exit(0);
         } 
     }
-    int callStackStart = 1048576;                       // Execution Stack Start
+    int callStackStart = 1048576;                                // Execution Stack Start
     unsigned int stackHead = callStackStart;                     // Execution Stack Head
     unsigned int cp = 256;                                       // Constant Pool Cunter
     unsigned int currentOpStack = callStackStart + 72;           // Operand Stack
-    unsigned int heapHead = MEMORY_SIZE;
-    // printf("\nheapHead %u ", heapHead);
+    unsigned int heapHead = MEMORY_SIZE - 1;
     pushIntToMem(&memory[stackHead], 1024);
-    pushIntToMem(&memory[stackHead + 8 + memory[cp+4]*4], atoi(argv[optind]));  // Since argv[optind] is char[1]}
-
+    if(optind < argc)
+    {
+        pushIntToMem(&memory[stackHead + 8], atoi(argv[optind]));  // Since argv[optind] is char[1]
+    }
 
     while(stackHead >= callStackStart)
     {
         interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead);
-        // printf("\n");
+        printf("\n");
     }
 }
 

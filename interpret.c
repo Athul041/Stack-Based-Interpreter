@@ -1,17 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "memFunctions.h"
+#include "MemFunctions.h"
 #include "stackFunctions.h"
 #include "interpret.h"
 
 void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsigned int *currentOpStack, unsigned int *cp, unsigned int *heapHead)
 {
-    // printf("\n*cp %d", *cp);
-    // // printf("\n*stackHead %d", *stackHead);
-    // printf("\npc %d", getIntFromMem(&memory[*stackHead]));
     unsigned char instr = memory[getIntFromMem(&memory[*stackHead])];
-    // printf("\ninstr %02x", instr);
     int val = 0;
     int i = 0;
     int arr[16];
@@ -28,17 +24,17 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
         case 0x36: // iStore(index)
             // printf("\niStore");
             // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popIntFromStack(memory, currentOpStack, *stackHead+72));
+            pushIntToMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popIntFromStack(memory, currentOpStack, *stackHead+72));
             // Pop from stack to lva
             // printStack(memory, *currentOpStack, *stackHead+72);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0x15: // iLoad(index)
             // printf("\niLoad");
             // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
-            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
+            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 2);
@@ -46,7 +42,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
         case 0x2e: // iaload
             // printf("\niaload");
             // pop arrayref, index from stack, push value
-            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popIntFromStack(memory, currentOpStack, *stackHead+72)]));
+            pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)]));
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 1);
@@ -57,8 +53,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             val = popIntFromStack(memory, currentOpStack, *stackHead+72);
             pushIntToMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)], val);
             // printStack(memory, *currentOpStack, *stackHead+72);
-            // *currentOpStack += 4;
-            // printHeap(memory, *heapHead);
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 1);
             break;   
         case 0x3: // iConst_0
@@ -139,10 +134,10 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // read const to variable
             // printf("\noperands %02x, %02x", memory[getIntFromMem(&memory[*stackHead])+1], memory[getIntFromMem(&memory[*stackHead])+2]);
             // printf("\nsign extended op2 %d", (int32_t)((int8_t)memory[getIntFromMem(&memory[*stackHead])+2]));
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
-            pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]) 
+            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            pushIntToMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]) 
                         + (int32_t)((int8_t)memory[getIntFromMem(&memory[*stackHead])+2]));
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getIntFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0x9f:
@@ -241,7 +236,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
         case 0xff:
             // printf("\nwrite");
             // printStack(memory, *currentOpStack, *stackHead+72);
-            printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
+             printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0x57:
@@ -255,7 +250,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // // printf("\nmemory[*cp+6]%02x", memory[*cp+6]);
             // if(memory[*cp+6] != 0x02)
             // {
-            //     printf("\nWarning!Trying to return void from function with return type not void");
+            //     // printf("\nWarning!Trying to return void from function with return type not void");
             // }
             *currentOpStack = *stackHead;
             *stackHead = getIntFromMem(&memory[*stackHead + 4]);
@@ -278,7 +273,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // // printf("\n SP %d", getIntFromMem(&memory[*stackHead + 4]));
             // if(memory[*cp+6] == 0x02)
             // {
-            //     printf("\nWarning!Trying to return void from function with return type int");
+            //     // printf("\nWarning!Trying to return void from function with return type int");
             // }
             pushIntToMem(&memory[*stackHead], popIntFromStack(memory, currentOpStack, *stackHead+72));
             *currentOpStack = *stackHead + 4;
@@ -307,18 +302,25 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // set pc, *stackHead, *currentOpStack
             *cp = 256 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
             // printStack(memory, *currentOpStack, *stackHead+72);
+            // printf("\nMoving %d values to new LVA", memory[*cp+4]);
             for(i = 0; i < memory[*cp+4]; i++)
             {
                 arr[i] = popIntFromStack(memory, currentOpStack, *stackHead+72);
-                // // printf("\narr[%d] %d", i, arr[i]);
+                // printf("\narr[%d] %d", i, arr[i]);
             }
             pushIntToMem(&memory[*currentOpStack+4], *stackHead);
             addIntValueToMem(&memory[*stackHead], 3); // incrementing pc before changing *stackHead
             *stackHead = *currentOpStack;
-            for(i = memory[*cp+4]-1; i >= 0; i--)
+            for(i = 0; i < memory[*cp+4]; i++)
             {
-                // // printf("\npushing %d", arr[i]);
-                pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + (4*i)], arr[i]);
+                // printf("\npushing %d", arr[memory[*cp+4]-1-i]);
+                pushIntToMem(&memory[*stackHead + 8 + (4*i)], arr[memory[*cp+4]-1-i]);
+            }
+            // printf("\nNew LVA:");
+            for(i = 0; i < memory[*cp+4]; i++)
+            {
+                
+                // printf("\t%d", getIntFromMem(&memory[*stackHead + 8 + (4*i)]));
             }
             *currentOpStack = *stackHead + 72;
             pushIntToMem(&memory[*stackHead], (1024 + (getIntFromMem(&memory[*cp]) - 1024)));
@@ -329,7 +331,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             val = 768 + 4*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
             // printf("\nSizeofObj %d", (int)memory[val]);
             // printf("\nheapHead %u", *heapHead);
-            *heapHead -= 4*(int)memory[val];
+            *heapHead -= 4*(int)memory[val] - 1;
             // printf("\nheapHead %d", *heapHead);
             for(i=0;i<(int)memory[val];i++)
             {
@@ -339,31 +341,32 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // printf("\nheapHead %u", *heapHead);
             // printf("\ncurrentOpStack %u", *currentOpStack);
             pushRefToMem(&memory[*currentOpStack], *heapHead);
+            *heapHead -= 1;
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
-            // printHeap(memory, *heapHead);
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0x3a:
             // printf("\nastore"); // astore(index)
             // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
             // printStack(memory, *currentOpStack, *stackHead+72);
-            pushIntToMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popRefFromStack(memory, currentOpStack, *stackHead+72));
-            // printf("\nLocal variable at index#%d = %u", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            pushIntToMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4], popRefFromStack(memory, currentOpStack, *stackHead+72));
+            // printf("\nLocal variable at index#%d = %u", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0x19: // aload(index)
             // printf("\naLoad");
             // printf("\noperand %02x", memory[getIntFromMem(&memory[*stackHead])+1]);
-            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
-            pushRefToMem(&memory[*currentOpStack], getRefFromMem(&memory[*stackHead + 8 + memory[*cp+4]*4 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
+            // printf("\nLocal variable at index#%d = %d", memory[getIntFromMem(&memory[*stackHead])+1], getRefFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));
+            pushRefToMem(&memory[*currentOpStack], getRefFromMem(&memory[*stackHead + 8 + memory[getIntFromMem(&memory[*stackHead])+1]*4]));        // Load LV to stack
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0xb4: // getfield(indexbyte1, indexbyte2)
             // printf("\ngetfield");
-            // printHeap(memory, *heapHead);
+            // printHeap(memory, *heapHead+1);
             pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72) 
                                     + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])]));
             // printStack(memory, *currentOpStack, *stackHead+72);
@@ -377,7 +380,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             pushIntToMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72)
                                     + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])], val);
             // printStack(memory, *currentOpStack, *stackHead+72);
-            // printHeap(memory, *heapHead);
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0x59: // dup
@@ -389,8 +392,11 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             break;
         case 0xbc: // newarray(atype)
             // printf("\nnewarray");
+            // printf("\nheapHead %u", *heapHead);
             val = popIntFromStack(memory, currentOpStack, *stackHead+72);
-            *heapHead -= 4*val;
+            // printf("\nval %d", val);
+            *heapHead -= (4*val) - 1;
+            // printf("\nheapHead %u", *heapHead);
             if(memory[getIntFromMem(&memory[*stackHead])+1])
             {
                 for(i=0;i<val;i++)
@@ -408,20 +414,22 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             pushRefToMem(&memory[*currentOpStack], *heapHead);
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
-            // printHeap(memory, *heapHead);
+            *heapHead -= 1;
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 2);
             break;
         case 0xbd:
             // printf("\nanewarray"); // anewarray(indexbyte1,indexbyte2)
             val = 768 + 4*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
             // printf("\nheapHead %u", *heapHead);
-            *heapHead -= 4*(int)memory[val]*popIntFromStack(memory, currentOpStack, *stackHead+72);
+            *heapHead -= 4*(int)memory[val]*popIntFromStack(memory, currentOpStack, *stackHead+72) - 1;
             // printf("\nheapHead %u", *heapHead);
             // printf("\ncurrentOpStack %u", *currentOpStack);
             pushRefToMem(&memory[*currentOpStack], *heapHead);
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
-            // printHeap(memory, *heapHead);
+            *heapHead -= 1;
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 3);
             break;
         case 0x32:
@@ -436,7 +444,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             val = popRefFromStack(memory, currentOpStack, *stackHead+72);
             pushRefToMem(&memory[4*popIntFromStack(memory, currentOpStack, *stackHead+72) + popRefFromStack(memory, currentOpStack, *stackHead+72)], val);
             // printStack(memory, *currentOpStack, *stackHead+72);
-            // printHeap(memory, *heapHead);
+            // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0x1:
@@ -447,7 +455,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         default:
-            printf("\n Unknown Instruction %02x!!", instr);
+            // printf("\n Unknown Instruction %02x!!", instr);
             exit(0);
     }
 }

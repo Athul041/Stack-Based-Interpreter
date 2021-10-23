@@ -1,9 +1,9 @@
-#include "memFunctions.h"
+#include "MemFunctions.h"
 #include "stackFunctions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define MEMORY_SIZE pow(2,32)/8 // 4294967296
+#define MEMORY_SIZE pow(2,32)/8// 4294967296
 
 int popIntFromStack(unsigned char *memPtr, unsigned int *stackHead, unsigned int stackStart)
 {
@@ -49,14 +49,15 @@ void printStack(unsigned char *memPtr, unsigned int stackHead, unsigned int stac
 
 void printHeap(unsigned char *memPtr, unsigned int heapHead)
 {
-    // heapHead += 1;
+    unsigned int Head = MEMORY_SIZE - 4;
     // // printf("\nInt in stack as hex %02x %02x %02x %02x", memPtr[stackHead], memPtr[stackHead+1], memPtr[stackHead+2], memPtr[stackHead+3]);
     printf("\n\nHeap :");
-    while(heapHead < MEMORY_SIZE)
+    // printf("\n[%u]\n", heapHead);
+    while(Head >= heapHead)
     {
-        printf("[%u]=>", heapHead);
-        printf("%d\t", getIntFromMem(&memPtr[heapHead]));
-        heapHead += 4;
+        printf("[%u]=>", Head);
+        printf("%d\t", getIntFromMem(&memPtr[Head]));
+        Head -= 4;
     }
-    // printf("\n");
+    printf("\n");
 }
