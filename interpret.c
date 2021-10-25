@@ -226,7 +226,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // printf("\ngetIntFromMem(&memory[popIntFromStack(memory, currentOpStack, *stackHead+72)] %d", getIntFromMem(&memory[popIntFromStack(memory, currentOpStack, *stackHead+72)]));
             if(!popIntFromStack(memory, currentOpStack, *stackHead+72))
             {
-                // printf("\nHere");
+                // printf("\nNULL");
                 // printf("\nbranchbyte1 %02x, branchbyte2 %02x, offset %d", memory[getIntFromMem(&memory[*stackHead])+1], memory[getIntFromMem(&memory[*stackHead])+2], (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]));
                 addIntValueToMem(&memory[*stackHead], (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]));
                 break;
@@ -236,7 +236,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
         case 0xff:
             // printf("\nwrite");
             // printStack(memory, *currentOpStack, *stackHead+72);
-             printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
+             // printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0x57:
@@ -368,7 +368,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // printf("\ngetfield");
             // printHeap(memory, *heapHead+1);
             pushIntToMem(&memory[*currentOpStack], getIntFromMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72) 
-                                    + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])]));
+                                    + 4*((int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]))]));
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
             addIntValueToMem(&memory[*stackHead], 3);
@@ -378,7 +378,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // printStack(memory, *currentOpStack, *stackHead+72);
             val = popIntFromStack(memory, currentOpStack, *stackHead+72);
             pushIntToMem(&memory[popRefFromStack(memory, currentOpStack, *stackHead+72)
-                                    + (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2])], val);
+                                    + 4*((int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]))], val);
             // printStack(memory, *currentOpStack, *stackHead+72);
             // printHeap(memory, *heapHead+1);
             addIntValueToMem(&memory[*stackHead], 3);
@@ -448,7 +448,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0x1:
-            // printf("\naconst_null"); // aastore
+            // printf("\naconst_null"); // aconst_null
             pushRefToMem(&memory[*currentOpStack], 0);
             // printStack(memory, *currentOpStack, *stackHead+72);
             *currentOpStack += 4;
