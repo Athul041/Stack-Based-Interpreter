@@ -236,7 +236,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
         case 0xff:
             // printf("\nwrite");
             // printStack(memory, *currentOpStack, *stackHead+72);
-             // printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
+             printf("%d\n", popIntFromStack(memory, currentOpStack, *stackHead+72));
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0x57:
