@@ -5,13 +5,13 @@
 #include "stackFunctions.h"
 #include "interpret.h"
 
-void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsigned int *currentOpStack, unsigned int *cp, unsigned int *heapHead)
+void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsigned int *currentOpStack, unsigned int *cp, unsigned int *heapHead, int threshold, methods *methods)
 {
     unsigned char instr = memory[getIntFromMem(&memory[*stackHead])];
     int val = 0;
     int i = 0;
     int arr[16];
-
+    int index;
     switch(instr){
         case 0x10: // biPush(value)
             // printf("\nBiPush");
@@ -300,7 +300,8 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             // goto that method with new stackframe
             // pop no. of args times from old opstack and load to lva
             // set pc, *stackHead, *currentOpStack
-            *cp = 256 + 7*(int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
+            index = (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
+            *cp = 256 + 7*index;
             // printStack(memory, *currentOpStack, *stackHead+72);
             // printf("\nMoving %d values to new LVA", memory[*cp+4]);
             for(i = 0; i < memory[*cp+4]; i++)
@@ -323,7 +324,23 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
                 // printf("\t%d", getIntFromMem(&memory[*stackHead + 8 + (4*i)]));
             }
             *currentOpStack = *stackHead + 72;
-            pushIntToMem(&memory[*stackHead], (1024 + (getIntFromMem(&memory[*cp]) - 1024)));
+            if(isAdded(methods, index) != 1)
+            {
+                addNewMethod(methods, index);
+            }
+            else
+            {
+                if(methods->methods->interpretedCount >= threshold)
+                {
+                    if(isCompiledMethod)
+                    {
+                        
+                        pushIntToMem(&memory[*stackHead], getIntFromMem(&memory[*cp]));
+                        break;
+                    }
+                }
+            }
+            pushIntToMem(&memory[*stackHead], getIntFromMem(&memory[*cp]));
             break;
         case 0xbb:
             // printf("\nnew"); // new(indexbyte,indexbyte)

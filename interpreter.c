@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
     }
     // Parsing command line arguments
     int opt;
+    int threshold;
+    char *aotLibrary;
     while((opt = getopt(argc, argv, ":e:c:")) != -1) 
     { 
         switch(opt) 
@@ -48,7 +50,19 @@ int main(int argc, char *argv[])
                 break; 
             case 'c':
                 readFromFile(optarg, &memory[256]); 
-                break;  
+                break;
+            case 'a':
+                threshold = atoi(optarg);
+                if (!threshold)
+                {
+                    printf("Enter valid threshold number!");
+                    exit(0);
+                } 
+                break; 
+            case 'l':
+                aotLibrary = malloc(sizeof(optarg)/sizeof(char));
+                *aotLibrary = optarg;
+                break;
             case ':': 
                 printf("Option needs a value\n"); 
                 exit(0); 
@@ -70,7 +84,7 @@ int main(int argc, char *argv[])
 
     while(stackHead >= callStackStart)
     {
-        interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead);
+        interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead, threshold, aotLibrary);
         // printf("\n");
     }
 }
