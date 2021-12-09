@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
 #include "MemFunctions.h"
 #include "stackFunctions.h"
 #include "interpret.h"
@@ -12,6 +13,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
     int i = 0;
     int arr[16];
     int index;
+    int (*func_ptr)();
     switch(instr){
         case 0x10: // biPush(value)
             // printf("\nBiPush");
@@ -295,6 +297,8 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0xb8:
+            char s;
+            scanf("%s", &s);
             // printf("\ninvokestatic"); // invokestatic(indexbyte,indexbyte)
             // (indexbyte1 << 8) | indexbyte2 gives index of constant pool
             // goto that method with new stackframe
@@ -308,6 +312,134 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             {
                 arr[i] = popIntFromStack(memory, currentOpStack, *stackHead+72);
                 // printf("\narr[%d] %d", i, arr[i]);
+            }
+            // check for AOT 
+            if(isAdded(methods, index) != 1)
+            {
+                addNewMethod(methods, index);
+            }
+            else
+            {
+                if(methods->methods->interpretedCount >= threshold)
+                {
+
+                    if(methods->methods[index].isCompiled == -1)
+                    {
+                        func_ptr =  dlsym(methods->fileHandle, strcat("func_", index));
+                        if (dlerror() == NULL)  
+                        {
+                            methods->methods[index].isCompiled == 1;
+                        }
+                        else
+                        {
+                            methods->methods[index].isCompiled == 0;
+                        }
+                    }
+                    if(methods->methods[index].isCompiled == 1)
+                    {
+                        func_ptr =  dlsym(methods->fileHandle, strcat("func_", index));
+                        switch ((int32_t)memory[*cp+4])
+                        {
+                        case 0:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr();
+                            }
+                            else
+                            {
+                                val = func_ptr();
+                            }
+                            break;
+                        case 1:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0]);
+                            }
+                            break;
+                        case 2:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0], arr[1]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1]);
+                            }
+                            break;
+                        case 3:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2]);
+                            }
+                            break;
+                        case 4:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2], arr[3]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2], arr[4]);
+                            }
+                            break;
+                        case 5:
+                            if ((int32_t)memory[*cp+6] == 0)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4]);
+                            }
+                            break;
+                        case 6:
+                            if ((int32_t)memory[*cp+6] == 0)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5]);
+                            }
+                            break;
+                        case 7:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6]);
+                            }
+                            break;
+                        case 8:
+                            if ((int32_t)memory[*cp+6] == 2)
+                            {
+                                func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+                            }
+                            else
+                            {
+                                val = func_ptr(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
+                            }
+                            break;
+                        }
+                        if ((int32_t)memory[*cp+6] != 2)
+                        {
+                            pushIntToMem(&memory[*currentOpStack], val);
+                        }
+                        methods[index].methods->compiledCount += 1; 
+                        break;
+                    }
+                }
+                methods->methods->interpretedCount++;
             }
             pushIntToMem(&memory[*currentOpStack+4], *stackHead);
             addIntValueToMem(&memory[*stackHead], 3); // incrementing pc before changing *stackHead
@@ -324,22 +456,6 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
                 // printf("\t%d", getIntFromMem(&memory[*stackHead + 8 + (4*i)]));
             }
             *currentOpStack = *stackHead + 72;
-            if(isAdded(methods, index) != 1)
-            {
-                addNewMethod(methods, index);
-            }
-            else
-            {
-                if(methods->methods->interpretedCount >= threshold)
-                {
-                    if(isCompiledMethod)
-                    {
-                        
-                        pushIntToMem(&memory[*stackHead], getIntFromMem(&memory[*cp]));
-                        break;
-                    }
-                }
-            }
             pushIntToMem(&memory[*stackHead], getIntFromMem(&memory[*cp]));
             break;
         case 0xbb:

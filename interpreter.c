@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <limits.h>
+#include <dlfcn.h>
 #include "interpret.h"
 #include "MemFunctions.h"
 #define MEMORY_SIZE pow(2,32)/8 // 4294967296
@@ -82,9 +83,17 @@ int main(int argc, char *argv[])
         pushIntToMem(&memory[stackHead + 8], atoi(argv[optind]));  // Since argv[optind] is char[1]
     }
 
+    void* fileHandle = dlopen(aotLibrary,RTLD_LAZY);
+    if (fileHandle == NULL)
+    {
+        printf("Could not find the library\n");
+        exit(-1);
+    }
+    methods allMethods = initMethods(0, fileHandle);
+    addNewMethod(&allMethods, 0);
     while(stackHead >= callStackStart)
     {
-        interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead, threshold, aotLibrary);
+        interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead, threshold, &allMethods);
         // printf("\n");
     }
 }
