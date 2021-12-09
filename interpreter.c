@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <dlfcn.h>
+#include <string.h>
 #include "interpret.h"
 #include "MemFunctions.h"
 #define MEMORY_SIZE pow(2,32)/8 // 4294967296
@@ -41,8 +42,8 @@ int main(int argc, char *argv[])
     // Parsing command line arguments
     int opt;
     int threshold;
-    char *aotLibrary;
-    while((opt = getopt(argc, argv, ":e:c:")) != -1) 
+    char *aotLibrary = malloc(sizeof(char));
+    while((opt = getopt(argc, argv, ":e:c:l:a:")) != -1) 
     { 
         switch(opt) 
         { 
@@ -61,8 +62,8 @@ int main(int argc, char *argv[])
                 } 
                 break; 
             case 'l':
-                aotLibrary = malloc(sizeof(optarg)/sizeof(char));
-                *aotLibrary = optarg;
+                // strcpy(aotLibrary, optarg);
+                aotLibrary = "./libIncrementByTwo.so";
                 break;
             case ':': 
                 printf("Option needs a value\n"); 
@@ -82,8 +83,7 @@ int main(int argc, char *argv[])
     {
         pushIntToMem(&memory[stackHead + 8], atoi(argv[optind]));  // Since argv[optind] is char[1]
     }
-
-    void* fileHandle = dlopen(aotLibrary,RTLD_LAZY);
+    void* fileHandle = dlopen(aotLibrary, RTLD_LAZY);
     if (fileHandle == NULL)
     {
         printf("Could not find the library\n");

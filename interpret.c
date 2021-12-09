@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "MemFunctions.h"
 #include "stackFunctions.h"
 #include "interpret.h"
@@ -14,6 +15,8 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
     int arr[16];
     int index;
     int (*func_ptr)();
+    char *fun = "func_";
+    char s;
     switch(instr){
         case 0x10: // biPush(value)
             // printf("\nBiPush");
@@ -297,16 +300,16 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             addIntValueToMem(&memory[*stackHead], 1);
             break;
         case 0xb8:
-            char s;
             scanf("%s", &s);
-            // printf("\ninvokestatic"); // invokestatic(indexbyte,indexbyte)
+            printf("\ninvokestatic"); // invokestatic(indexbyte,indexbyte)
             // (indexbyte1 << 8) | indexbyte2 gives index of constant pool
             // goto that method with new stackframe
             // pop no. of args times from old opstack and load to lva
             // set pc, *stackHead, *currentOpStack
             index = (int16_t)(memory[getIntFromMem(&memory[*stackHead])+1] << 8 | memory[getIntFromMem(&memory[*stackHead])+2]);
             *cp = 256 + 7*index;
-            // printStack(memory, *currentOpStack, *stackHead+72);
+            printStack(memory, *currentOpStack, *stackHead+72);
+            printf("Index = %d", index);
             // printf("\nMoving %d values to new LVA", memory[*cp+4]);
             for(i = 0; i < memory[*cp+4]; i++)
             {
@@ -317,6 +320,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
             if(isAdded(methods, index) != 1)
             {
                 addNewMethod(methods, index);
+                printMethods(methods);
             }
             else
             {
@@ -325,7 +329,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
 
                     if(methods->methods[index].isCompiled == -1)
                     {
-                        func_ptr =  dlsym(methods->fileHandle, strcat("func_", index));
+                        func_ptr =  dlsym(methods->fileHandle, itoa(index, fun+5, 10));
                         if (dlerror() == NULL)  
                         {
                             methods->methods[index].isCompiled == 1;
@@ -337,7 +341,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
                     }
                     if(methods->methods[index].isCompiled == 1)
                     {
-                        func_ptr =  dlsym(methods->fileHandle, strcat("func_", index));
+                        func_ptr =  dlsym(methods->fileHandle, itoa(index, fun+5, 10));
                         switch ((int32_t)memory[*cp+4])
                         {
                         case 0:
@@ -440,6 +444,7 @@ void interpretInstructions(unsigned char *memory, unsigned int *stackHead, unsig
                     }
                 }
                 methods->methods->interpretedCount++;
+                printMethods(methods);
             }
             pushIntToMem(&memory[*currentOpStack+4], *stackHead);
             addIntValueToMem(&memory[*stackHead], 3); // incrementing pc before changing *stackHead
