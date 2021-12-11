@@ -4,4 +4,4 @@ extern signed int getIntFromMem(unsigned char *memPtr);
 extern unsigned int getRefFromMem(unsigned char *memPtr);
 extern signed int getIntFromLoadedMem(unsigned char *memPtr);
 extern void relocateInt(unsigned char *source, unsigned char *destination);
-extern void addIntValueToMem(unsigned char* source, signed int num);
+extern void appendPC(unsigned char* source, signed int num);

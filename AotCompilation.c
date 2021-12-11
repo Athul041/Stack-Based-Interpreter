@@ -1,28 +1,39 @@
 #include "stdlib.h"
 #include "AotCompilation.h"
 
-methods initMethods(int size, char *fileHandle)
+methods initMethods(methods *newMethods, int size, void *fileHandle)
 {
-    methods newMethods;
-    newMethods.size = size;
-    newMethods.methods = malloc(sizeof(method)*newMethods.size);
-    return newMethods;
+    newMethods->methods = malloc(sizeof(method)*size);
+    newMethods->used = 0;
+    newMethods->size = size;
+    newMethods->fileHandle = fileHandle;
 }
 
-void addNewMethod(methods *methods, int index)
+void addNewMethod(methods *allmethods, int index)
 {
-    if (methods->size <= index)
+    if (allmethods->size <= allmethods->used)
     {
-        methods->size = index + 1;
-        methods->methods = realloc(methods, sizeof(method)*methods->size);
+        allmethods->size = allmethods->size + 1;
+        allmethods->methods = realloc(allmethods->methods, sizeof(method)*allmethods->size);
     }
-    methods->methods[index].functionIndex = index;
-    methods->methods[index].isCompiled = -1;
-    methods->methods[index].init = 1;
+    if (allmethods->size <= index)
+    {
+        allmethods->size = index + 1;
+        allmethods->methods = realloc(allmethods->methods, sizeof(method)*allmethods->size);
+    }
+    allmethods->methods[index].functionIndex = index;
+    allmethods->methods[index].isCompiled = -1;
+    allmethods->methods[index].init = 1;
+    allmethods->methods[index].interpretedCount = 0;
+    allmethods->methods[index].compiledCount = 0;
 }
 
 int isAdded(methods *methods, int index)
 {
+    if (methods->size <= index)
+    {
+        return 0;
+    }
     if(methods->methods[index].init == 1)
     {
         return 1;
@@ -32,11 +43,13 @@ int isAdded(methods *methods, int index)
 
 void printMethods(methods *methods)
 {
-    for (int i = 0; i < methods->size; i++)
+    printf("\nMethods Table\n");
+    int i;
+    for (i = 0; i < methods->size; i++)
     {
-        if (methods->methods[i].init != -1)
+        if (methods->methods[i].functionIndex != 0 && methods->methods[i].init != -1)
         {
-            printf("func_%d | I: %d | C: %d", methods->methods[i].functionIndex, methods->methods[i].interpretedCount, methods->methods[i].compiledCount);
+            printf("func_%d | Interpreted: %d | Compiled: %d", methods->methods[i].functionIndex, methods->methods[i].interpretedCount, methods->methods[i].compiledCount, methods->methods[i].init);
         }
         printf("\n");
     }

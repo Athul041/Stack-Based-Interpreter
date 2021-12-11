@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     // Parsing command line arguments
     int opt;
     int threshold;
-    char *aotLibrary = malloc(sizeof(char));
+    char aotLibrary[256];
     while((opt = getopt(argc, argv, ":e:c:l:a:")) != -1) 
     { 
         switch(opt) 
@@ -59,17 +59,17 @@ int main(int argc, char *argv[])
                 {
                     printf("Enter valid threshold number!");
                     exit(0);
-                } 
+                }
                 break; 
             case 'l':
-                // strcpy(aotLibrary, optarg);
-                aotLibrary = "./libIncrementByTwo.so";
+                strcpy(aotLibrary, "./");
+                strncat(aotLibrary, optarg, strlen(optarg));
                 break;
             case ':': 
                 printf("Option needs a value\n"); 
                 exit(0); 
             case '?': 
-                printf("Unknown option: %c\n", optopt);
+                printf("Unknown option: %c\n", opt);
                 exit(0);
         } 
     }
@@ -86,15 +86,17 @@ int main(int argc, char *argv[])
     void* fileHandle = dlopen(aotLibrary, RTLD_LAZY);
     if (fileHandle == NULL)
     {
-        printf("Could not find the library\n");
-        exit(-1);
+        fprintf(stderr, "dlopen failed: %s\n", dlerror()); 
+        exit(EXIT_FAILURE);
     }
-    methods allMethods = initMethods(0, fileHandle);
+    methods allMethods;
+    initMethods(&allMethods, 0, fileHandle);
     addNewMethod(&allMethods, 0);
     while(stackHead >= callStackStart)
     {
+        
         interpretInstructions(memory, &stackHead, &currentOpStack, &cp, &heapHead, threshold, &allMethods);
-        // printf("\n");
     }
+    printMethods(&allMethods);
 }
 

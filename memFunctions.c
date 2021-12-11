@@ -46,7 +46,7 @@ void relocateInt(unsigned char *source, unsigned char *destination)
     pushIntToMem(destination, getIntFromMem(source));
 }
 
-void addIntValueToMem(unsigned char* source, signed int num)
+void appendPC(unsigned char* source, signed int num)
 {
     pushIntToMem(source, getIntFromMem(source)+num);
 }

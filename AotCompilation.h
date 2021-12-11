@@ -6,7 +6,7 @@
 typedef struct {
     int init;
     int functionIndex;
-    bool isCompiled;
+    int isCompiled;
     int interpretedCount;
     int compiledCount;
 } method;
@@ -15,9 +15,10 @@ typedef struct {
     method *methods;
     void *fileHandle;
     int size;
+    int used;
 } methods;
 
-extern methods initMethods(int size, char *fileHandle);
+extern methods initMethods(methods *methods, int size, void *fileHandle);
 extern int checkInLibrary(int index);
 extern void addNewMethod(methods *methods, int index);
 extern int isAdded(methods *methods, int index);
